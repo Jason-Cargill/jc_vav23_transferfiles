@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for i in {0..35}; do
+    /usr/local/gromacs-2020/bin/gmx grompp \
+        -c ../RUN${i}/prod.gro \
+        -f ../RUN${i}/prod.mdp \
+        -p ../RUN${i}/topol.top \
+        -n ../RUN${i}/index.ndx \
+        -o ./frame0_RUN${i}.tpr \
+        -po mdout_RUN${i}.mdp
+done

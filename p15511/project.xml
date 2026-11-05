@@ -1,0 +1,70 @@
+<project type="GRO_A8" id="15511">
+  <min-core-version v="0.0.9"/>
+
+  <contact v="jason.cargill@temple.edu"/>
+
+  <!-- project settings -->
+  <runs v="36"/>
+  <clones v="100"/>
+  <gens v="1000"/>
+  <atoms v="202885"/> 
+
+  <job-priority v="clone -gen run"/>
+
+  <!-- simulation time == 5.0 ns -->
+  <!-- stats -->
+
+  <stats_credit v="80376"/>
+  <deadline v="5.0"/>
+  <timeout v="3.0"/>
+  <timeout-factor v="2"/>
+  <send>
+    frame$gen.tpr
+  </send>
+
+  <return>
+    *.log
+    *.xtc
+    *.xvg
+    state.cpt
+    *.gro
+  </return>
+
+  <core-args>
+    -c frame$gen.gro
+    -s frame$gen.tpr
+    -x frame$gen.xtc
+  </core-args>
+
+  <create-command>
+    /usr/local/gromacs-2020/bin/gmx grompp -c $home/RUN$run/prod.gro -f $home/RUN$run/prod.mdp -p $home/RUN$run/topol.top -n $home/RUN$run/index.ndx  -o $jobdir/frame0.tpr -po $jobdir/mdout.mdp
+  </create-command>
+
+  <next-gen-command>
+    # number of steps per WU
+    nsteps_per_WU=2500000
+
+    # Generate a new mdp file using the old mdp. Increasing the start-time and adding the continuation key-word.
+	  random=\$(echo " " |/usr/bin/awk '{print rand()*1000000}')
+    starttime=\$(((\$nsteps_per_WU*$gen)))
+
+    /home/server/anaconda3/bin/python /home/server/server2/projects/Gromacs/p15511/make_continuation_mdp.py $home/RUN$run/prod.mdp \$starttime 300 > $jobdir/prod_\$random.mdp
+
+    # Generate the next gen tpr based on the new mdp file and the previous gen velocities and positions
+    /usr/local/gromacs-2020/bin/gmx grompp -t $results/state.cpt -c $results/frame$prev-gen.gro -f $jobdir/prod_\$random.mdp -n $home/RUN$run/index.ndx  -p $home/RUN$run/topol.top -o $jobdir/frame$gen.tpr
+
+    # Remove unnecessary mdp.
+    # /bin/rm -f $jobdir/prod_\$random.mdp
+
+    # Save previous-gen gro file and cpt.
+    /bin/mv $results/frame$prev-gen.gro $jobdir
+    /bin/mv $results/state.cpt $jobdir/frame$prev-gen.cpt
+
+  </next-gen-command>
+
+    <cleanup-command>
+   $(if $(neq $prev-gen 0) "var=$prev-gen;rm -f $jobdir/frame\$(((\$var-2))).gro")
+   $(if $(neq $prev-gen 0) "var=$prev-gen;rm -f $jobdir/frame\$(((\$var-2))).cpt")
+   </cleanup-command>
+
+</project>

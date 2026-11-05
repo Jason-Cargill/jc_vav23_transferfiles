@@ -1,0 +1,1 @@
+/home/server/anaconda3/bin/python /home/server/server2/projects/Gromacs/p15511/make_continuation_mdp.py ../RUN0/prod.mdp 2500000 300 > ./prod_R0.mdp
